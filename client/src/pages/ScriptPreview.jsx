@@ -33,7 +33,7 @@ export default function ScriptPreview() {
   };
 
   useEffect(() => {
-    if (!topic) { navigate("/upload-topic"); return; }
+    if (!topic) { navigate("/script-preview"); return; }
     generateScript();
     loadModels();
     setupCamera();

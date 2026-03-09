@@ -4,7 +4,7 @@ import { RedirectToSignIn, SignedIn, SignedOut } from '@clerk/clerk-react'
 import LandingPage from './pages/LandingPage'
 
 import ScriptPreview from './pages/ScriptPreview'
-import PresentPage from './pages/PresentPage'
+import ReportPage from './pages/ReportPage'
 import TopicUpload from './pages/TopicUpload'
 const ProtectedRoute = ({ children }) => (
   <>

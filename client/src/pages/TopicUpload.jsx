@@ -1,16 +1,14 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const audienceTypes = ["General", "Professional", "Academic", "Kids", "Technical"];
 const durations = ["1 min", "2 mins", "3 mins", "5 mins", "10 mins"];
-const tones = ["Formal", "Conversational", "Persuasive", "Inspirational", "Educational"];
 
 export default function TopicUpload() {
+  const navigate = useNavigate();
   const [topic, setTopic] = useState("");
   const [audience, setAudience] = useState("General");
   const [duration, setDuration] = useState("3 mins");
-  const [tone, setTone] = useState("Conversational");
-  const [mode, setMode] = useState("topic"); // "topic" or "script"
-  const [script, setScript] = useState("");
   const [charCount, setCharCount] = useState(0);
 
   const handleTopicChange = (e) => {
@@ -19,10 +17,10 @@ export default function TopicUpload() {
   };
 
   const handleSubmit = () => {
-    if (mode === "topic" && !topic.trim()) return;
-    if (mode === "script" && !script.trim()) return;
-    // navigate to present page
-    alert("Generating your session...");
+    if (!topic.trim()) return;
+    navigate("/script-preview", {
+      state: { topic, audience, duration }
+    });
   };
 
   return (
@@ -51,38 +49,12 @@ export default function TopicUpload() {
           100% { left: 200%; }
         }
 
-        .fade-up {
-          animation: fadeUp 0.6s ease forwards;
-          opacity: 0;
-        }
+        .fade-up { animation: fadeUp 0.6s ease forwards; opacity: 0; }
         .fade-up:nth-child(1) { animation-delay: 0.1s; }
         .fade-up:nth-child(2) { animation-delay: 0.2s; }
         .fade-up:nth-child(3) { animation-delay: 0.3s; }
         .fade-up:nth-child(4) { animation-delay: 0.4s; }
         .fade-up:nth-child(5) { animation-delay: 0.5s; }
-
-        .mode-btn {
-          flex: 1; padding: 14px 24px;
-          border-radius: 12px; font-size: 14px;
-          font-family: 'DM Sans', sans-serif;
-          cursor: pointer; transition: all 0.25s;
-          font-weight: 500; border: 1px solid transparent;
-        }
-        .mode-btn.active {
-          background: linear-gradient(135deg, #ff6b35, #ff2d6b);
-          color: #fff; border-color: transparent;
-          box-shadow: 0 0 30px rgba(255,107,53,0.25);
-        }
-        .mode-btn.inactive {
-          background: rgba(255,255,255,0.03);
-          color: rgba(255,255,255,0.4);
-          border-color: rgba(255,255,255,0.06);
-        }
-        .mode-btn.inactive:hover {
-          background: rgba(255,255,255,0.06);
-          color: rgba(255,255,255,0.7);
-          border-color: rgba(255,255,255,0.1);
-        }
 
         .topic-input {
           width: 100%;
@@ -103,27 +75,6 @@ export default function TopicUpload() {
           font-style: italic;
         }
         .topic-input:focus {
-          border-color: rgba(255,107,53,0.4);
-          box-shadow: 0 0 40px rgba(255,107,53,0.08);
-        }
-
-        .script-input {
-          width: 100%;
-          background: rgba(255,255,255,0.02);
-          border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 16px;
-          color: rgba(255,255,255,0.8);
-          font-family: 'DM Sans', sans-serif;
-          font-size: 15px;
-          padding: 24px 28px;
-          outline: none;
-          transition: border-color 0.3s, box-shadow 0.3s;
-          resize: none;
-          line-height: 1.8;
-          min-height: 200px;
-        }
-        .script-input::placeholder { color: rgba(255,255,255,0.15); }
-        .script-input:focus {
           border-color: rgba(255,107,53,0.4);
           box-shadow: 0 0 40px rgba(255,107,53,0.08);
         }
@@ -185,8 +136,7 @@ export default function TopicUpload() {
 
         .gradient-text {
           background: linear-gradient(135deg, #ff6b35 0%, #ff2d6b 50%, #c026d3 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
+          -webkit-background-clip: text; -webkit-text-fill-color: transparent;
           background-clip: text;
         }
 
@@ -226,16 +176,16 @@ export default function TopicUpload() {
         background: "rgba(2,0,8,0.6)",
         position: "sticky", top: 0, zIndex: 100,
       }}>
-        <div style={{
-          fontFamily: "'Instrument Serif', serif",
-          fontSize: 20, letterSpacing: "-0.5px", cursor: "pointer"
-        }}>
+        <div
+          onClick={() => navigate("/")}
+          style={{
+            fontFamily: "'Instrument Serif', serif",
+            fontSize: 20, letterSpacing: "-0.5px", cursor: "pointer"
+          }}
+        >
           PitchPerfect<span className="gradient-text">.AI</span>
         </div>
-        <div style={{
-          fontSize: 13, color: "rgba(255,255,255,0.3)",
-          fontFamily: "'DM Sans', sans-serif"
-        }}>
+        <div style={{ fontSize: 13, color: "rgba(255,255,255,0.3)", fontFamily: "'DM Sans', sans-serif" }}>
           New Session
         </div>
         <div style={{
@@ -249,19 +199,13 @@ export default function TopicUpload() {
       </nav>
 
       {/* Main Content */}
-      <div style={{
-        maxWidth: 720, margin: "0 auto",
-        padding: "60px 40px 100px",
-        position: "relative", zIndex: 2,
-      }}>
+      <div style={{ maxWidth: 720, margin: "0 auto", padding: "60px 40px 100px", position: "relative", zIndex: 2 }}>
 
         {/* Page Header */}
         <div className="fade-up" style={{ marginBottom: 48, textAlign: "center" }}>
           <div style={{
-            fontSize: 12, letterSpacing: 3,
-            color: "rgba(255,107,53,0.7)",
-            textTransform: "uppercase",
-            marginBottom: 16, fontWeight: 500,
+            fontSize: 12, letterSpacing: 3, color: "rgba(255,107,53,0.7)",
+            textTransform: "uppercase", marginBottom: 16, fontWeight: 500,
           }}>
             New Session
           </div>
@@ -280,115 +224,77 @@ export default function TopicUpload() {
             fontSize: 16, color: "rgba(255,255,255,0.35)",
             lineHeight: 1.7, fontWeight: 300, maxWidth: 480, margin: "0 auto"
           }}>
-            Enter a topic and we'll craft your script, or paste your own.
-            Then present live and get coached by AI.
+            Enter your topic and we'll craft a script. Then present live and get coached by AI.
           </p>
         </div>
 
-        {/* Mode Toggle */}
-        <div className="fade-up" style={{
-          display: "flex", gap: 8, marginBottom: 32,
-          background: "rgba(255,255,255,0.02)",
-          border: "1px solid rgba(255,255,255,0.06)",
-          borderRadius: 16, padding: 6,
-        }}>
-          <button
-            className={`mode-btn ${mode === "topic" ? "active" : "inactive"}`}
-            onClick={() => setMode("topic")}
-          >
-            Generate Script from Topic
-          </button>
-          
-        </div>
-
-        {/* Input Area */}
+        {/* Topic Input */}
         <div className="fade-up" style={{ marginBottom: 32 }}>
-          {mode === "topic" ? (
-            <div style={{ position: "relative" }}>
-              <textarea
-                className="topic-input"
-                rows={3}
-                placeholder="e.g. The impact of AI on modern education..."
-                value={topic}
-                onChange={handleTopicChange}
-                maxLength={200}
-              />
-              <div style={{
-                position: "absolute", bottom: 16, right: 20,
-                fontSize: 12, color: "rgba(255,255,255,0.2)",
-                fontFamily: "'DM Sans', sans-serif"
-              }}>
-                {charCount}/200
-              </div>
-            </div>
-          ) : (
+          <div style={{ position: "relative" }}>
             <textarea
-              className="script-input"
-              rows={8}
-              placeholder="Paste your script here... AI will analyze your delivery against it."
-              value={script}
-              onChange={(e) => setScript(e.target.value)}
+              className="topic-input"
+              rows={3}
+              placeholder="e.g. The impact of AI on modern education..."
+              value={topic}
+              onChange={handleTopicChange}
+              maxLength={200}
             />
-          )}
+            <div style={{
+              position: "absolute", bottom: 16, right: 20,
+              fontSize: 12, color: "rgba(255,255,255,0.2)",
+              fontFamily: "'DM Sans', sans-serif"
+            }}>
+              {charCount}/200
+            </div>
+          </div>
         </div>
 
-        {/* Options — only show for topic mode */}
-        {mode === "topic" && (
-          <>
-            {/* Audience */}
-            <div className="fade-up" style={{ marginBottom: 28 }}>
-              <div style={{
-                fontSize: 12, letterSpacing: 2,
-                color: "rgba(255,255,255,0.3)",
-                textTransform: "uppercase",
-                marginBottom: 12, fontWeight: 500,
-                fontFamily: "'DM Sans', sans-serif"
-              }}>
-                Audience
-              </div>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                {audienceTypes.map(a => (
-                  <button
-                    key={a}
-                    className={`option-btn ${audience === a ? "selected" : ""}`}
-                    onClick={() => setAudience(a)}
-                  >
-                    {a}
-                  </button>
-                ))}
-              </div>
-            </div>
+        {/* Audience */}
+        <div className="fade-up" style={{ marginBottom: 28 }}>
+          <div style={{
+            fontSize: 12, letterSpacing: 2, color: "rgba(255,255,255,0.3)",
+            textTransform: "uppercase", marginBottom: 12, fontWeight: 500,
+            fontFamily: "'DM Sans', sans-serif"
+          }}>
+            Audience
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {audienceTypes.map(a => (
+              <button
+                key={a}
+                className={`option-btn ${audience === a ? "selected" : ""}`}
+                onClick={() => setAudience(a)}
+              >
+                {a}
+              </button>
+            ))}
+          </div>
+        </div>
 
-            {/* Duration */}
-            <div className="fade-up" style={{ marginBottom: 28 }}>
-              <div style={{
-                fontSize: 12, letterSpacing: 2,
-                color: "rgba(255,255,255,0.3)",
-                textTransform: "uppercase",
-                marginBottom: 12, fontWeight: 500,
-                fontFamily: "'DM Sans', sans-serif"
-              }}>
-                Duration
-              </div>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                {durations.map(d => (
-                  <button
-                    key={d}
-                    className={`option-btn ${duration === d ? "selected" : ""}`}
-                    onClick={() => setDuration(d)}
-                  >
-                    {d}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-        
-          </>
-        )}
+        {/* Duration */}
+        <div className="fade-up" style={{ marginBottom: 40 }}>
+          <div style={{
+            fontSize: 12, letterSpacing: 2, color: "rgba(255,255,255,0.3)",
+            textTransform: "uppercase", marginBottom: 12, fontWeight: 500,
+            fontFamily: "'DM Sans', sans-serif"
+          }}>
+            Duration
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {durations.map(d => (
+              <button
+                key={d}
+                className={`option-btn ${duration === d ? "selected" : ""}`}
+                onClick={() => setDuration(d)}
+              >
+                {d}
+              </button>
+            ))}
+          </div>
+        </div>
 
         {/* Summary Card */}
-        {(topic || script) && (
+        {topic && (
           <div style={{
             background: "rgba(255,107,53,0.04)",
             border: "1px solid rgba(255,107,53,0.15)",
@@ -399,29 +305,21 @@ export default function TopicUpload() {
           }}>
             <div>
               <div style={{ fontSize: 12, color: "rgba(255,107,53,0.6)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>
-                Ready to present
+                Ready to generate
               </div>
               <div style={{ fontSize: 15, color: "rgba(255,255,255,0.7)", fontFamily: "'Instrument Serif', serif" }}>
-                {mode === "topic" ? `"${topic.slice(0, 50)}${topic.length > 50 ? "..." : ""}"` : "Your custom script"}
+                "{topic.slice(0, 60)}{topic.length > 60 ? "..." : ""}"
               </div>
             </div>
             <div style={{ display: "flex", gap: 16 }}>
-              {mode === "topic" && (
-                <>
-                  <div style={{ textAlign: "center" }}>
-                    <div style={{ fontSize: 13, color: "#ff6b35" }}>{duration}</div>
-                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.25)" }}>Duration</div>
-                  </div>
-                  <div style={{ textAlign: "center" }}>
-                    <div style={{ fontSize: 13, color: "#ff6b35" }}>{audience}</div>
-                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.25)" }}>Audience</div>
-                  </div>
-                  <div style={{ textAlign: "center" }}>
-                    <div style={{ fontSize: 13, color: "#ff6b35" }}>{tone}</div>
-                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.25)" }}>Tone</div>
-                  </div>
-                </>
-              )}
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontSize: 13, color: "#ff6b35" }}>{duration}</div>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.25)" }}>Duration</div>
+              </div>
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontSize: 13, color: "#ff6b35" }}>{audience}</div>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.25)" }}>Audience</div>
+              </div>
             </div>
           </div>
         )}
@@ -430,10 +328,10 @@ export default function TopicUpload() {
         <div className="fade-up">
           <button
             className="submit-btn"
-            disabled={mode === "topic" ? !topic.trim() : !script.trim()}
+            disabled={!topic.trim()}
             onClick={handleSubmit}
           >
-            {mode === "topic" ? "Generate Script & Start Session →" : "Start Session with My Script →"}
+            Generate Script & Start Session →
           </button>
           <div style={{
             textAlign: "center", marginTop: 16,
@@ -443,6 +341,7 @@ export default function TopicUpload() {
             Your webcam and microphone will be activated on the next screen
           </div>
         </div>
+
       </div>
     </div>
   );
