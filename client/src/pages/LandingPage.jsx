@@ -1,10 +1,17 @@
 import { useState, useEffect, useRef } from "react";
 import TextRevealCard from "./TextRevealCardTitle";
 import HowItWorks from "../components/HowItWorks";
+import { SparklesPreview } from "../pages/SparklesPreview";
+import { SignInButton, SignOutButton, useUser } from "@clerk/clerk-react";
+import { useNavigate } from "react-router-dom";
 
-const floatingWords = ["Confidence","Clarity","Presence","Impact","Fluency","Mastery","Poise","Authority"];
+const floatingWords = [
+  "Confidence", "Clarity", "Presence", "Impact",
+  "Fluency", "Mastery", "Poise", "Authority",
+];
 
 export default function LandingPage() {
+  const { isSignedIn } = useUser();
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [wordIndex, setWordIndex] = useState(0);
   const [visible, setVisible] = useState(true);
@@ -14,6 +21,7 @@ export default function LandingPage() {
   const featuresRef = useRef(null);
   const howItWorksRef = useRef(null);
   const aboutRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleMouse = (e) => setMousePos({ x: e.clientX, y: e.clientY });
@@ -41,7 +49,7 @@ export default function LandingPage() {
       },
       { threshold: 0.4 }
     );
-    [homeRef, featuresRef, howItWorksRef, aboutRef].forEach(ref => {
+    [homeRef, featuresRef, howItWorksRef, aboutRef].forEach((ref) => {
       if (ref.current) observer.observe(ref.current);
     });
     return () => observer.disconnect();
@@ -66,13 +74,6 @@ export default function LandingPage() {
     { icon: "△", title: "Progress Tracking", desc: "Watch your scores improve across sessions over time" },
   ];
 
-  const steps = [
-    { num: "01", title: "Enter Your Topic", desc: "Type any topic or paste your own script. AI structures it into a perfect speech." },
-    { num: "02", title: "Present on Webcam", desc: "Hit record and present naturally. AI watches your face, body and listens to your voice simultaneously." },
-    { num: "03", title: "Get Analyzed", desc: "Real-time graphs show your emotion, posture and voice scores updating live as you speak." },
-    { num: "04", title: "Receive Your Report", desc: "After your session, AI generates a full coaching report with specific tips to improve." },
-  ];
-
   const stats = [
     { val: "7+", label: "Emotions Tracked" },
     { val: "Real-time", label: "Live Analysis" },
@@ -81,11 +82,16 @@ export default function LandingPage() {
   ];
 
   return (
-    <div style={{
-      background: "#020008", minHeight: "100vh",
-      fontFamily: "'DM Sans', sans-serif", color: "#fff",
-      overflowX: "hidden", cursor: "none",
-    }}>
+    <div
+      style={{
+        background: "#020008",
+        minHeight: "100vh",
+        fontFamily: "'DM Sans', sans-serif",
+        color: "#fff",
+        overflowX: "hidden",
+        // ✅ REMOVED cursor: "none" — was blocking all clicks
+      }}
+    >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -143,23 +149,14 @@ export default function LandingPage() {
           box-shadow: 0 20px 60px rgba(255,107,53,0.08);
         }
         .feature-card:hover::before { opacity: 1; }
-        .step-card {
-          position: relative; padding: 32px;
-          background: rgba(255,255,255,0.02);
-          border: 1px solid rgba(255,255,255,0.06);
-          border-radius: 16px; transition: all 0.3s;
-        }
-        .step-card:hover {
-          border-color: rgba(255,107,53,0.2);
-          transform: translateY(-3px);
-        }
         .cta-btn {
           background: linear-gradient(135deg, #ff6b35, #ff2d6b);
           border: none; color: #fff; padding: 18px 48px;
           border-radius: 100px; font-size: 16px;
           font-family: 'DM Sans', sans-serif; font-weight: 500;
-          cursor: pointer; position: relative; overflow: hidden;
+          cursor: pointer !important; position: relative; overflow: hidden;
           transition: transform 0.2s, box-shadow 0.2s; letter-spacing: 0.3px;
+          pointer-events: all !important;
         }
         .cta-btn:hover {
           transform: scale(1.04);
@@ -167,10 +164,11 @@ export default function LandingPage() {
         }
         .nav-link {
           color: rgba(255,255,255,0.5); font-size: 14px;
-          transition: color 0.2s; cursor: pointer;
+          transition: color 0.2s; cursor: pointer !important;
           background: none; border: none;
           font-family: 'DM Sans', sans-serif;
           padding: 6px 0; position: relative;
+          pointer-events: all !important;
         }
         .nav-link::after {
           content: ''; position: absolute;
@@ -196,8 +194,9 @@ export default function LandingPage() {
         ::-webkit-scrollbar-thumb { background: rgba(255,107,53,0.3); border-radius: 2px; }
       `}</style>
 
-      <div className="cursor" style={{ left: mousePos.x, top: mousePos.y }} />
-      <div className="cursor-ring" style={{ left: mousePos.x, top: mousePos.y }} />
+      {/* ✅ pointer-events: none on cursor divs so they never block clicks */}
+      <div className="cursor" style={{ left: mousePos.x, top: mousePos.y, pointerEvents: "none" }} />
+      <div className="cursor-ring" style={{ left: mousePos.x, top: mousePos.y, pointerEvents: "none" }} />
       <div className="noise" />
 
       {/* Background orbs */}
@@ -232,16 +231,13 @@ export default function LandingPage() {
       }}>
         <div
           onClick={() => scrollTo(homeRef)}
-          style={{
-            fontFamily: "'Instrument Serif', serif",
-            fontSize: 22, letterSpacing: "-0.5px", cursor: "pointer"
-          }}
+          style={{ fontFamily: "'Instrument Serif', serif", fontSize: 22, letterSpacing: "-0.5px", cursor: "pointer" }}
         >
           PitchPerfect<span className="gradient-text">.AI</span>
         </div>
 
         <div style={{ display: "flex", gap: 36, alignItems: "center" }}>
-          {navItems.map(item => (
+          {navItems.map((item) => (
             <button
               key={item.id}
               onClick={() => scrollTo(item.ref)}
@@ -252,13 +248,33 @@ export default function LandingPage() {
           ))}
         </div>
 
-        <button
-          className="cta-btn"
-          style={{ padding: "12px 28px", fontSize: 14 }}
-          onClick={() => scrollTo(homeRef)}
-        >
-          Get Started Free
-        </button>
+        {isSignedIn ? (
+          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+            <button
+              className="cta-btn"
+              style={{ padding: "12px 28px", fontSize: 14 }}
+              onClick={() => navigate("/upload-topic")}
+            >
+              Dashboard
+            </button>
+            <SignOutButton>
+              <button style={{
+                background: "none", border: "1px solid rgba(255,255,255,0.15)",
+                color: "rgba(255,255,255,0.5)", padding: "12px 20px",
+                borderRadius: 100, fontSize: 13, cursor: "pointer",
+                fontFamily: "'DM Sans', sans-serif"
+              }}>
+                Logout
+              </button>
+            </SignOutButton>
+          </div>
+        ) : (
+          <SignInButton mode="modal" forceRedirectUrl="/upload-topic">
+            <button className="cta-btn" style={{ padding: "12px 28px", fontSize: 14 }}>
+              Get Started Free
+            </button>
+          </SignInButton>
+        )}
       </nav>
 
       {/* HERO SECTION */}
@@ -275,12 +291,9 @@ export default function LandingPage() {
           border: "1px solid rgba(255,107,53,0.2)",
           borderRadius: 100, padding: "8px 18px",
           fontSize: 13, color: "rgba(255,255,255,0.7)",
-          marginBottom: 40, letterSpacing: "0.5px"
+          marginBottom: 40, letterSpacing: "0.5px",
         }}>
-          <span style={{
-            width: 6, height: 6, borderRadius: "50%",
-            background: "#ff6b35", display: "inline-block"
-          }} />
+          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#ff6b35", display: "inline-block" }} />
           AI-Powered Presentation Coach — Real-time Analysis
         </div>
 
@@ -313,100 +326,108 @@ export default function LandingPage() {
           </span>
         </h1>
 
+        <SparklesPreview />
+
         <p className="hero-text" style={{
           fontSize: "clamp(16px, 2vw, 20px)",
           color: "rgba(255,255,255,0.45)",
           maxWidth: 520, lineHeight: 1.7,
           marginBottom: 52, fontWeight: 300,
         }}>
-          Upload a topic. Get an AI-crafted script. Present live.
-          Receive real-time analysis of your face, posture, and voice.
-          Then get coached by AI.
+          Upload a topic. Get an AI-crafted script. Present live. Receive
+          real-time analysis of your face, posture, and voice. Then get coached by AI.
         </p>
 
         <div className="hero-text">
-          <button
-            className="cta-btn"
-            style={{ fontSize: 17 }}
-            onClick={() => scrollTo(featuresRef)}
-          >
-            Get Started Free →
-          </button>
+          {isSignedIn ? (
+            <button
+              className="cta-btn"
+              style={{ fontSize: 17 }}
+              onClick={() => navigate("/upload-topic")}
+            >
+              Go to Dashboard →
+            </button>
+          ) : (
+            <SignInButton mode="modal" forceRedirectUrl="/upload-topic">
+              <button className="cta-btn" style={{ fontSize: 17 }}>
+                Get Started →
+              </button>
+            </SignInButton>
+          )}
         </div>
 
         <div className="hero-text" style={{
           display: "flex", gap: 48, marginTop: 80,
           borderTop: "1px solid rgba(255,255,255,0.06)",
-          paddingTop: 40, flexWrap: "wrap", justifyContent: "center"
+          paddingTop: 40, flexWrap: "wrap", justifyContent: "center",
         }}>
-          {stats.map(s => (
+          {stats.map((s) => (
             <div key={s.label} style={{ textAlign: "center" }}>
               <div style={{
                 fontFamily: "'Instrument Serif', serif",
                 fontSize: 32, letterSpacing: "-1px",
                 background: "linear-gradient(135deg, #ff6b35, #ff2d6b)",
-                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent"
-              }}>{s.val}</div>
-              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", marginTop: 4 }}>{s.label}</div>
+                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+              }}>
+                {s.val}
+              </div>
+              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", marginTop: 4 }}>
+                {s.label}
+              </div>
             </div>
           ))}
         </div>
       </section>
 
+      <TextRevealCard />
 
-        <TextRevealCard/>
       {/* FEATURES SECTION */}
       <section id="features" ref={featuresRef} style={{
         padding: "100px 60px", position: "relative", zIndex: 2,
-        maxWidth: 1200, margin: "0 auto"
+        maxWidth: 1200, margin: "0 auto",
       }}>
         <div style={{ textAlign: "center", marginBottom: 64 }}>
           <div style={{
             fontSize: 12, letterSpacing: 3, color: "rgba(255,107,53,0.7)",
-            textTransform: "uppercase", marginBottom: 16, fontWeight: 500
+            textTransform: "uppercase", marginBottom: 16, fontWeight: 500,
           }}>
             What PitchPerfect.AI Does
           </div>
           <h2 style={{
             fontFamily: "'Instrument Serif', serif",
             fontSize: "clamp(36px, 5vw, 60px)",
-            letterSpacing: "-2px", fontWeight: 400, lineHeight: 1.1
+            letterSpacing: "-2px", fontWeight: 400, lineHeight: 1.1,
           }}>
             Everything your{" "}
             <span style={{ fontStyle: "italic" }} className="gradient-text">
               presentation coach
-            </span>
-            {" "}does.<br />Automatically.
+            </span>{" "}
+            does.<br />Automatically.
           </h2>
         </div>
 
         <div style={{
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-          gap: 20
+          gap: 20,
         }}>
           {features.map((f, i) => (
             <div key={i} className="feature-card">
-              <div style={{
-                fontSize: 24, marginBottom: 16,
-                color: "#ff6b35", fontWeight: 300
-              }}>{f.icon}</div>
-              <div style={{
-                fontFamily: "'Instrument Serif', serif",
-                fontSize: 22, marginBottom: 10, letterSpacing: "-0.5px"
-              }}>{f.title}</div>
-              <div style={{
-                fontSize: 15, color: "rgba(255,255,255,0.4)",
-                lineHeight: 1.7, fontWeight: 300
-              }}>{f.desc}</div>
+              <div style={{ fontSize: 24, marginBottom: 16, color: "#ff6b35", fontWeight: 300 }}>
+                {f.icon}
+              </div>
+              <div style={{ fontFamily: "'Instrument Serif', serif", fontSize: 22, marginBottom: 10, letterSpacing: "-0.5px" }}>
+                {f.title}
+              </div>
+              <div style={{ fontSize: 15, color: "rgba(255,255,255,0.4)", lineHeight: 1.7, fontWeight: 300 }}>
+                {f.desc}
+              </div>
             </div>
           ))}
         </div>
       </section>
 
-    
-
-<HowItWorks sectionRef={howItWorksRef} />
+      <HowItWorks sectionRef={howItWorksRef} />
 
       {/* ABOUT SECTION */}
       <section id="about" ref={aboutRef} style={{
@@ -416,7 +437,7 @@ export default function LandingPage() {
         <div style={{ maxWidth: 800, margin: "0 auto", textAlign: "center" }}>
           <div style={{
             fontSize: 12, letterSpacing: 3, color: "rgba(255,107,53,0.7)",
-            textTransform: "uppercase", marginBottom: 16, fontWeight: 500
+            textTransform: "uppercase", marginBottom: 16, fontWeight: 500,
           }}>
             About
           </div>
@@ -424,14 +445,16 @@ export default function LandingPage() {
             fontFamily: "'Instrument Serif', serif",
             fontSize: "clamp(32px, 4vw, 52px)",
             letterSpacing: "-2px", fontWeight: 400,
-            lineHeight: 1.2, marginBottom: 24
+            lineHeight: 1.2, marginBottom: 24,
           }}>
             Built for anyone who wants to{" "}
-            <span className="gradient-text" style={{ fontStyle: "italic" }}>speak better</span>
+            <span className="gradient-text" style={{ fontStyle: "italic" }}>
+              speak better
+            </span>
           </h2>
           <p style={{
             fontSize: 17, color: "rgba(255,255,255,0.4)",
-            lineHeight: 1.9, fontWeight: 300, marginBottom: 24
+            lineHeight: 1.9, fontWeight: 300, marginBottom: 24,
           }}>
             PitchPerfect.AI combines real-time computer vision, speech recognition,
             and generative AI to give you the kind of feedback that used to require
@@ -440,14 +463,28 @@ export default function LandingPage() {
           </p>
           <p style={{
             fontSize: 17, color: "rgba(255,255,255,0.4)",
-            lineHeight: 1.9, fontWeight: 300, marginBottom: 48
+            lineHeight: 1.9, fontWeight: 300, marginBottom: 48,
           }}>
-            Built with React, Node.js, MongoDB, face-api.js, MediaPipe, and Web Speech API.
-            No expensive subscriptions. No fluff. Just better presentations.
+            Built with React, Node.js, MongoDB, face-api.js, MediaPipe, and Web
+            Speech API. No expensive subscriptions. No fluff. Just better presentations.
           </p>
-          <button className="cta-btn" style={{ fontSize: 17 }}>
-            Logout  →
-          </button>
+
+  
+          {isSignedIn ? (
+            <button
+              className="cta-btn"
+              style={{ fontSize: 17 }}
+              onClick={() => navigate("/upload-topic")}
+            >
+              Go to Dashboard →
+            </button>
+          ) : (
+            <SignInButton mode="modal" forceRedirectUrl="/upload-topic">
+              <button className="cta-btn" style={{ fontSize: 17 }}>
+                Get Started Free →
+              </button>
+            </SignInButton>
+          )}
         </div>
       </section>
 
@@ -458,20 +495,20 @@ export default function LandingPage() {
         display: "flex", justifyContent: "space-between", alignItems: "center",
         position: "relative", zIndex: 2,
         color: "rgba(255,255,255,0.2)", fontSize: 13,
-        flexWrap: "wrap", gap: 12
+        flexWrap: "wrap", gap: 12,
       }}>
         <div style={{ fontFamily: "'Instrument Serif', serif", fontSize: 18 }}>
           PitchPerfect<span className="gradient-text">.AI</span>
         </div>
         <div style={{ display: "flex", gap: 24 }}>
-          {navItems.map(item => (
+          {navItems.map((item) => (
             <button
               key={item.id}
               onClick={() => scrollTo(item.ref)}
               style={{
                 background: "none", border: "none",
                 color: "rgba(255,255,255,0.2)", fontSize: 13,
-                cursor: "pointer", fontFamily: "'DM Sans', sans-serif"
+                cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
               }}
             >
               {item.label}
