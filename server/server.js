@@ -2,7 +2,6 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
-const { clerkMiddleware } = require('@clerk/express');
 
 const connectDB = require('./config/db');
 const scriptRoutes = require('./routes/scriptRoutes');
@@ -13,15 +12,8 @@ const app = express();
 
 connectDB();
 
-app.use(cors());
+app.use(cors({ origin: "http://localhost:5173" }));
 app.use(express.json());
-
-
-app.use(
-  clerkMiddleware({
-    
-  })
-);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -41,4 +33,3 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-

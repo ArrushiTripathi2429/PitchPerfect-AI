@@ -13,6 +13,14 @@ export default function ReportPage() {
   const [loading, setLoading] = useState(true);
   const [dots, setDots] = useState(".");
 
+  
+  function formatTime(s) {
+    if (!s) return "0:00";
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${m}:${sec.toString().padStart(2, "0")}`;
+  }
+
   useEffect(() => {
     if (!topic) { navigate("/upload-topic"); return; }
     generateReport();
@@ -25,6 +33,7 @@ export default function ReportPage() {
     return () => clearInterval(interval);
   }, []);
 
+
   async function generateReport() {
     setLoading(true);
     try {
@@ -32,51 +41,29 @@ export default function ReportPage() {
         ? Object.entries(emotionScores).sort((a, b) => b[1] - a[1])[0][0]
         : currentEmotion || "neutral";
 
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/report`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
-          messages: [{
-            role: "user",
-            content: `You are a professional presentation coach. Give a coaching report for this session.
-
-Topic: ${topic}
-Duration: ${formatTime(seconds)}
-Words spoken: ${wordCount}
-Average WPM: ${wpm} (ideal: 120–150)
-Filler words: ${fillerCount}
-Dominant emotion: ${dominantEmotion}
-Transcript excerpt: ${transcript?.slice(0, 400) || "Not available"}
-
-Write exactly 4 sections:
-1. OVERALL SCORE — score out of 10, one sentence why
-2. STRENGTHS — 2-3 specific things done well
-3. AREAS TO IMPROVE — 2-3 specific actionable tips
-4. NEXT SESSION FOCUS — one powerful thing to work on
-
-Be specific, warm, and encouraging. No fluff.`
-          }]
+          topic, seconds, wordCount, wpm,
+          fillerCount, transcript,
+          currentEmotion: dominantEmotion,
+          emotionScores
         })
       });
-      const data = await res.json();
-      setReport(data.content[0].text);
-    } catch (e) {
-      setReport("Could not generate report. Please check your connection and try again.");
-    }
-    setLoading(false);
-  }
 
-  function formatTime(s) {
-    if (!s) return "0:00";
-    const m = Math.floor(s / 60);
-    const sec = s % 60;
-    return `${m}:${sec.toString().padStart(2, "0")}`;
+      const data = await res.json();
+      setReport(data.report || "No report generated.");
+
+    } catch (e) {
+      console.error("Report fetch error:", e);
+      setReport("Failed to generate report. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   const sections = report ? report.split(/\n(?=\d\.)/).filter(Boolean) : [];
-
   const sectionColors = ["#ff6b35", "#34C759", "#FFB800", "#4FC3F7"];
   const sectionIcons = ["◎", "✦", "◈", "△"];
 

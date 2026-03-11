@@ -1,5 +1,5 @@
 const express = require('express');
-const { ClerkExpressRequireAuth } = require('@clerk/express');
+
 const {
   createReport,
   getReportById,
@@ -9,7 +9,7 @@ const {
 const router = express.Router();
 
 // All report endpoints require a logged-in Clerk user
-router.use(ClerkExpressRequireAuth());
+//router.use(ClerkExpressRequireAuth());
 
 // POST /api/report
 router.post('/', createReport);

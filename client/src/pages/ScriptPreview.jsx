@@ -73,7 +73,7 @@ export default function ScriptPreview() {
   async function generateScript() {
     setLoadingScript(true);
     try {
-      const res = await fetch("http://localhost:5000/api/script", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/script`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ topic, audience, duration })
@@ -118,16 +118,45 @@ export default function ScriptPreview() {
   }
 
   async function setupCamera() {
+  if (videoRef.current?.srcObject) {
+    videoRef.current.srcObject.getTracks().forEach(t => t.stop());
+    videoRef.current.srcObject = null;
+  }
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { width: 640, height: 480, facingMode: "user" },
+      audio: true
+    });
+
+    if (videoRef.current) {
+      videoRef.current.srcObject = stream;
+
+      // ✅ More reliable than onloadedmetadata
+      videoRef.current.oncanplay = () => setCameraReady(true);
+
+      // ✅ Fallback in case oncanplay doesn't fire
+      setTimeout(() => setCameraReady(true), 2000);
+    }
+
+    setupVoiceCrackDetection(stream);
+
+  } catch (e) {
+    console.error("Camera error:", e);
+    await new Promise(res => setTimeout(res, 2000));
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.onloadedmetadata = () => setCameraReady(true);
+        videoRef.current.oncanplay = () => setCameraReady(true);
+        setTimeout(() => setCameraReady(true), 2000);
       }
-      setupVoiceCrackDetection(stream);
-    } catch (e) {
-      console.error("Camera error:", e);
+    } catch (e2) {
+      console.error("Camera retry failed:", e2);
     }
+  }
+
   }
 
   function setupVoiceCrackDetection(stream) {
@@ -145,13 +174,10 @@ export default function ScriptPreview() {
   function startVoiceCrackDetection() {
     if (!analyserRef.current) return;
     const dataArray = new Float32Array(analyserRef.current.fftSize);
-
     voiceCrackIntervalRef.current = setInterval(() => {
       analyserRef.current.getFloatTimeDomainData(dataArray);
       const rms = Math.sqrt(dataArray.reduce((s, v) => s + v * v, 0) / dataArray.length);
       const volume = rms * 100;
-
-      // Voice crack = sudden sharp drop from speaking volume to near silence
       if (prevVolumeRef.current > 15 && volume < 3) {
         setVoiceCracks(v => v + 1);
       }
@@ -161,25 +187,20 @@ export default function ScriptPreview() {
 
   function startPostureDetection() {
     if (!poseLandmarkerRef.current) return;
-
     poseIntervalRef.current = setInterval(async () => {
       if (!videoRef.current) return;
       try {
         const result = poseLandmarkerRef.current.detectForVideo(
-          videoRef.current,
-          performance.now()
+          videoRef.current, performance.now()
         );
-
         if (result.landmarks && result.landmarks.length > 0) {
-          const landmarks = result.landmarks[0];
-          analyzePosture(landmarks);
+          analyzePosture(result.landmarks[0]);
         }
       } catch (e) {}
     }, 500);
   }
 
   function analyzePosture(landmarks) {
-    // Key landmarks
     const nose = landmarks[0];
     const leftShoulder = landmarks[11];
     const rightShoulder = landmarks[12];
@@ -187,23 +208,12 @@ export default function ScriptPreview() {
     const rightEar = landmarks[8];
 
     let score = 100;
-
-    // Check uneven shoulders (slouching sideways)
-    const shoulderDiff = Math.abs(leftShoulder.y - rightShoulder.y);
-    if (shoulderDiff > 0.05) score -= 25;
-
-    // Check head tilt
-    const headTilt = Math.abs(leftEar.y - rightEar.y);
-    if (headTilt > 0.05) score -= 25;
-
-    // Check if person is centered in frame
+    if (Math.abs(leftShoulder.y - rightShoulder.y) > 0.05) score -= 25;
+    if (Math.abs(leftEar.y - rightEar.y) > 0.05) score -= 25;
     if (nose.x < 0.25 || nose.x > 0.75) score -= 25;
-
-    // Check eye contact (nose y position — looking down = low score)
     const lookingDown = nose.y > 0.6;
     setEyeContact(!lookingDown);
     if (lookingDown) score -= 25;
-
     setPostureScore(Math.max(score, 0));
   }
 
@@ -252,7 +262,6 @@ export default function ScriptPreview() {
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = "en-US";
-
     recognition.onresult = (e) => {
       for (let i = e.resultIndex; i < e.results.length; i++) {
         const t = e.results[i][0].transcript;
@@ -292,8 +301,9 @@ export default function ScriptPreview() {
   }
 
   const emotionColor = emotionColors[currentEmotion] || "#4FC3F7";
-  const wordCountScript = script.split(" ").filter(Boolean).length;
-  const estimatedTime = Math.ceil(wordCountScript / 130);
+  // ✅ FIXED — safe split
+  const wordCountScript = script ? script.split(" ").filter(Boolean).length : 0;
+  const estimatedTime = script ? Math.ceil(wordCountScript / 130) : 0;
 
   return (
     <div style={{
@@ -492,7 +502,6 @@ export default function ScriptPreview() {
               }}>
                 <video ref={videoRef} autoPlay muted playsInline style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
 
-                {/* Emotion badge */}
                 {isPresenting && (
                   <div style={{
                     position: "absolute", top: 12, left: 12,
@@ -506,7 +515,6 @@ export default function ScriptPreview() {
                   </div>
                 )}
 
-                {/* Eye contact badge */}
                 {isPresenting && (
                   <div style={{
                     position: "absolute", bottom: 12, left: 12,
@@ -517,12 +525,11 @@ export default function ScriptPreview() {
                   }}>
                     <div style={{ width: 7, height: 7, borderRadius: "50%", background: eyeContact ? "#34C759" : "#FF2D55" }} />
                     <span style={{ fontSize: 11, color: eyeContact ? "#34C759" : "#FF2D55", fontWeight: 500 }}>
-                      {eyeContact ? "Eye contact" : "Look up!"}
+                      {eyeContact ? "Eye contact ✓" : "Look up!"}
                     </span>
                   </div>
                 )}
 
-                {/* Timer badge */}
                 {isPresenting && (
                   <div style={{
                     position: "absolute", top: 12, right: 12,
@@ -536,14 +543,12 @@ export default function ScriptPreview() {
                   </div>
                 )}
 
-                {/* Posture badge */}
                 {isPresenting && (
                   <div style={{
                     position: "absolute", bottom: 12, right: 12,
                     background: "rgba(0,0,0,0.65)", backdropFilter: "blur(8px)",
                     border: `1px solid ${postureScore > 80 ? "#34C75940" : postureScore > 50 ? "#FFB80040" : "#FF2D5540"}`,
                     borderRadius: 100, padding: "5px 12px",
-                    display: "flex", alignItems: "center", gap: 6,
                   }}>
                     <span style={{ fontSize: 11, color: postureScore > 80 ? "#34C759" : postureScore > 50 ? "#FFB800" : "#FF2D55", fontWeight: 500 }}>
                       Posture {postureScore}%
@@ -558,13 +563,13 @@ export default function ScriptPreview() {
                 )}
 
                 {cameraReady && !isPresenting && (
-                  <div style={{ position: "absolute", inset: 0, background: "rgba(2,0,8,0.5)", backdropFilter: "blur(2px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                  <div style={{ position: "absolute", inset: 0, background: "rgba(2,0,8,0.5)", backdropFilter: "blur(2px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)" }}>Camera ready</div>
                   </div>
                 )}
               </div>
 
-              {/* Live stats — 3x2 grid */}
+              {/* Stats grid */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 20 }}>
                 <div className="stat-card">
                   <div style={{ fontSize: 10, letterSpacing: 1, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", marginBottom: 6 }}>WPM</div>
@@ -604,7 +609,6 @@ export default function ScriptPreview() {
                 </div>
               </div>
 
-              {/* Action button */}
               {!isPresenting ? (
                 <button className="action-btn start-btn" style={{ width: "100%" }} disabled={!cameraReady} onClick={startPresenting}>
                   {cameraReady ? "Start Presenting →" : "Loading camera..."}

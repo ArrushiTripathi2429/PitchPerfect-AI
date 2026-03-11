@@ -1,57 +1,86 @@
 const Report = require('../models/Report');
 const Session = require('../models/Session');
-const User = require('../models/User');
-const { generateReport } = require('../services/claudeService');
+const Groq = require('groq-sdk');
+
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
+function formatTime(s) {
+  if (!s) return "0:00";
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return `${m}:${sec.toString().padStart(2, "0")}`;
+}
 
 /**
  * POST /api/report
- * Body: { userId, sessionIds, reportType, extraContext }
+ * Body: { topic, seconds, wordCount, wpm, fillerCount, transcript, 
+ *         currentEmotion, postureScore, voiceCracks, eyeContact, sessionId }
  */
 const createReport = async (req, res, next) => {
   try {
-    const { userId, sessionIds, reportType, extraContext } = req.body;
+    const {
+      topic, seconds, wordCount, wpm, fillerCount,
+      transcript, currentEmotion, postureScore,
+      voiceCracks, eyeContact, sessionId
+    } = req.body;
 
-    if (!userId || !Array.isArray(sessionIds) || sessionIds.length === 0) {
-      return res
-        .status(400)
-        .json({ message: 'userId and at least one sessionId are required.' });
+    if (!topic) {
+      return res.status(400).json({ message: 'Topic is required.' });
     }
 
-    const user = await User.findById(userId).select('-password');
-    if (!user) {
-      return res.status(404).json({ message: 'User not found.' });
-    }
+    const completion = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages: [{
+        role: "user",
+        content: `You are a professional presentation coach. Give a coaching report for this session.
 
-    const sessions = await Session.find({ _id: { $in: sessionIds }, user: userId });
+Topic: ${topic}
+Duration: ${formatTime(seconds)}
+Words spoken: ${wordCount || 0}
+Average WPM: ${wpm || 0} (ideal: 120–150)
+Filler words used: ${fillerCount || 0} (um, uh, like, basically...)
+Dominant emotion detected: ${currentEmotion || "neutral"}
+Posture score: ${postureScore || 100}% (100% = perfect posture)
+Voice cracks: ${voiceCracks || 0}
+Eye contact maintained: ${eyeContact ? "Yes" : "No"}
+Transcript excerpt: ${transcript?.slice(0, 400) || "Not available"}
 
-    if (sessions.length === 0) {
-      return res.status(404).json({ message: 'No sessions found for given IDs.' });
-    }
+Write exactly 4 sections:
+1. OVERALL SCORE — score out of 10, one sentence why
+2. STRENGTHS — 2-3 specific things done well based on the data
+3. AREAS TO IMPROVE — 2-3 specific actionable tips based on the data
+4. NEXT SESSION FOCUS — one powerful thing to work on next time
 
-    const reportPayload = {
-      user,
-      sessions,
-      reportType: reportType || 'summary',
-      extraContext: extraContext || '',
-    };
+Be specific, warm, and encouraging. Reference the actual numbers. No fluff.`
+      }],
+      max_tokens: 1000,
+    });
 
-    const generatedReport = await generateReport(reportPayload);
+    const generatedReport = completion.choices[0].message.content;
 
+    // Save report to MongoDB
     const report = await Report.create({
-      user: user._id,
-      sessions: sessions.map((s) => s._id),
-      type: reportPayload.reportType,
-      content: generatedReport,
-      metadata: {
-        extraContext: reportPayload.extraContext,
+      sessionId: sessionId || null,
+      topic,
+      analysisData: {
+        seconds,
+        wordCount,
+        wpm,
+        fillerCount,
+        currentEmotion,
+        postureScore,
+        voiceCracks,
+        eyeContact,
       },
+      content: generatedReport,
     });
 
     res.status(201).json({
       message: 'Report generated successfully.',
       reportId: report._id,
-      report,
+      report: generatedReport,
     });
+
   } catch (error) {
     next(error);
   }
@@ -63,15 +92,10 @@ const createReport = async (req, res, next) => {
 const getReportById = async (req, res, next) => {
   try {
     const { id } = req.params;
-
-    const report = await Report.findById(id)
-      .populate('user', '-password')
-      .populate('sessions');
-
+    const report = await Report.findById(id);
     if (!report) {
       return res.status(404).json({ message: 'Report not found.' });
     }
-
     res.json(report);
   } catch (error) {
     next(error);
@@ -84,11 +108,8 @@ const getReportById = async (req, res, next) => {
 const getReportsForUser = async (req, res, next) => {
   try {
     const { userId } = req.params;
-
-    const reports = await Report.find({ user: userId })
-      .sort({ createdAt: -1 })
-      .populate('sessions');
-
+    const reports = await Report.find({ userId })
+      .sort({ createdAt: -1 });
     res.json(reports);
   } catch (error) {
     next(error);

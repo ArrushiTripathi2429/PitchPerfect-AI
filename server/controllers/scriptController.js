@@ -1,50 +1,53 @@
 const Session = require('../models/Session');
 const User = require('../models/User');
-const { generateScript } = require('../services/claudeService');
+const Groq = require('groq-sdk');
+
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 /**
  * POST /api/script
- * Body: { userId, topic, tone, length, language, extraContext }
+ * Body: { topic, audience, duration }
  */
 const createScript = async (req, res, next) => {
   try {
-    const { userId, topic, tone, length, language, extraContext } = req.body;
+    const { topic, audience, duration } = req.body;
 
-    if (!userId || !topic) {
-      return res.status(400).json({ message: 'userId and topic are required.' });
+    if (!topic) {
+      return res.status(400).json({ message: 'Topic is required.' });
     }
 
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found.' });
-    }
+    const completion = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages: [{
+        role: "user",
+        content: `Write a ${duration || "3 min"} presentation speech for a ${audience || "general"} audience on: "${topic}".
 
-    const scriptPrompt = {
-      topic,
-      tone: tone || 'professional',
-      length: length || 'medium',
-      language: language || 'en',
-      extraContext: extraContext || '',
-    };
+Structure:
+- Strong opening hook
+- 3 clear main points
+- Memorable closing
 
-    const generatedScript = await generateScript(scriptPrompt, user);
+Write as natural flowing speech, no headers or labels. Conversational tone, powerful delivery.`
+      }],
+      max_tokens: 1000,
+    });
 
+    const generatedScript = completion.choices[0].message.content;
+
+    // Save session to MongoDB
     const session = await Session.create({
-      user: user._id,
       topic,
-      tone: scriptPrompt.tone,
-      length: scriptPrompt.length,
-      language: scriptPrompt.language,
+      audience: audience || 'general',
+      duration: duration || '3 mins',
       script: generatedScript,
-      metadata: { extraContext: scriptPrompt.extraContext },
     });
 
     res.status(201).json({
       message: 'Script generated successfully.',
       script: generatedScript,
       sessionId: session._id,
-      session,
     });
+
   } catch (error) {
     next(error);
   }
@@ -57,7 +60,7 @@ const getScriptBySession = async (req, res, next) => {
   try {
     const { sessionId } = req.params;
 
-    const session = await Session.findById(sessionId).populate('user', '-password');
+    const session = await Session.findById(sessionId);
     if (!session) {
       return res.status(404).json({ message: 'Session not found.' });
     }

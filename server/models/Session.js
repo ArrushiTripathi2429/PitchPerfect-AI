@@ -5,10 +5,12 @@ const sessionSchema = new mongoose.Schema(
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
+      required: false,  // ← changed to false
       index: true,
     },
     topic: { type: String, required: true, trim: true },
+    audience: { type: String, trim: true, default: 'general' },  // ← added
+    duration: { type: String, trim: true, default: '3 mins' },   // ← added
     tone: { type: String, trim: true, default: 'professional' },
     length: { type: String, trim: true, default: 'medium' },
     language: { type: String, trim: true, default: 'en' },
@@ -19,4 +21,3 @@ const sessionSchema = new mongoose.Schema(
 );
 
 module.exports = mongoose.models.Session || mongoose.model('Session', sessionSchema);
-
