@@ -45,7 +45,7 @@ export default function ScriptPreview() {
     if (!topic) { navigate("/upload-topic"); return; }
     generateScript();
     loadModels();
-    setupCamera();
+    setTimeout(() => setupCamera(), 500);
     return () => cleanup();
   }, []);
 
@@ -69,6 +69,22 @@ export default function ScriptPreview() {
       setWpm(Math.round((wordCount / seconds) * 60));
     }
   }, [seconds, wordCount]);
+
+  
+  useEffect(() => {
+  
+  const handleBeforeUnload = () => {
+    if (videoRef.current?.srcObject) {
+      videoRef.current.srcObject.getTracks().forEach(t => t.stop());
+    }
+    if (audioContextRef.current?.state !== "closed") {
+      audioContextRef.current?.close();
+    }
+  };
+
+  window.addEventListener("beforeunload", handleBeforeUnload);
+  return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+}, []);
 
   async function generateScript() {
     setLoadingScript(true);
@@ -118,6 +134,7 @@ export default function ScriptPreview() {
   }
 
   async function setupCamera() {
+
   if (videoRef.current?.srcObject) {
     videoRef.current.srcObject.getTracks().forEach(t => t.stop());
     videoRef.current.srcObject = null;
@@ -132,30 +149,39 @@ export default function ScriptPreview() {
     if (videoRef.current) {
       videoRef.current.srcObject = stream;
 
-      // ✅ More reliable than onloadedmetadata
-      videoRef.current.oncanplay = () => setCameraReady(true);
+      
+      await new Promise((resolve) => {
+        videoRef.current.oncanplay = resolve;
+      
+        setTimeout(resolve, 3000);
+      });
 
-      // ✅ Fallback in case oncanplay doesn't fire
-      setTimeout(() => setCameraReady(true), 2000);
+      setCameraReady(true);
     }
 
     setupVoiceCrackDetection(stream);
 
   } catch (e) {
     console.error("Camera error:", e);
+
+  
     await new Promise(res => setTimeout(res, 2000));
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.oncanplay = () => setCameraReady(true);
-        setTimeout(() => setCameraReady(true), 2000);
+        await new Promise((resolve) => {
+          videoRef.current.oncanplay = resolve;
+          setTimeout(resolve, 3000);
+        });
+        setCameraReady(true);
       }
     } catch (e2) {
       console.error("Camera retry failed:", e2);
     }
   }
+
 
   }
 

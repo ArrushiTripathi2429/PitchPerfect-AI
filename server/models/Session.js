@@ -5,7 +5,7 @@ const sessionSchema = new mongoose.Schema(
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: false,  // ← changed to false
+      required: false,  
       index: true,
     },
     topic: { type: String, required: true, trim: true },

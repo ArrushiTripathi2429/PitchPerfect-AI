@@ -19,7 +19,7 @@ const createReport = async (req, res, next) => {
       topic, seconds, wordCount, wpm, fillerCount,
       transcript, currentEmotion, postureScore,
       voiceCracks, eyeContact, sessionId,
-      userId, userEmail   // ✅ from Clerk
+      userId, userEmail   
     } = req.body;
 
     if (!topic) {

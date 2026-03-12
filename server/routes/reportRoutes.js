@@ -8,8 +8,7 @@ const {
 
 const router = express.Router();
 
-// All report endpoints require a logged-in Clerk user
-//router.use(ClerkExpressRequireAuth());
+
 
 // POST /api/report
 router.post('/', createReport);

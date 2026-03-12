@@ -5,7 +5,7 @@ import { useUser } from "@clerk/clerk-react";
 export default function ReportPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useUser(); // ✅ Clerk user
+  const { user } = useUser(); 
 
   const {
     topic, seconds, wordCount, wpm,
@@ -52,8 +52,8 @@ export default function ReportPage() {
           currentEmotion: dominantEmotion,
           emotionScores, postureScore,
           voiceCracks, eyeContact,
-          userId: user?.id,           // ✅ Clerk userId
-          userEmail: user?.primaryEmailAddress?.emailAddress, // ✅ optional
+          userId: user?.id,       
+          userEmail: user?.primaryEmailAddress?.emailAddress,
         })
       });
 
