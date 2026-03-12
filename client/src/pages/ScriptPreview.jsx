@@ -217,17 +217,21 @@ export default function ScriptPreview() {
     setPostureScore(Math.max(score, 0));
   }
 
-  function cleanup() {
-    if (detectionInterval.current) clearInterval(detectionInterval.current);
-    if (poseIntervalRef.current) clearInterval(poseIntervalRef.current);
-    if (voiceCrackIntervalRef.current) clearInterval(voiceCrackIntervalRef.current);
-    if (recognitionRef.current) recognitionRef.current.stop();
-    if (audioContextRef.current) audioContextRef.current.close();
-    if (videoRef.current?.srcObject) {
-      videoRef.current.srcObject.getTracks().forEach(t => t.stop());
-    }
+   function cleanup() {
+  if (detectionInterval.current) clearInterval(detectionInterval.current);
+  if (poseIntervalRef.current) clearInterval(poseIntervalRef.current);
+  if (voiceCrackIntervalRef.current) clearInterval(voiceCrackIntervalRef.current);
+  if (recognitionRef.current) recognitionRef.current.stop();
+  
+  
+  if (audioContextRef.current && audioContextRef.current.state !== "closed") {
+    audioContextRef.current.close();
   }
-
+  
+  if (videoRef.current?.srcObject) {
+    videoRef.current.srcObject.getTracks().forEach(t => t.stop());
+  }
+}
   async function startPresenting() {
     setIsPresenting(true);
     await loadMediaPipe();
@@ -237,49 +241,70 @@ export default function ScriptPreview() {
     startVoiceCrackDetection();
   }
 
-  function startEmotionDetection() {
-    if (!modelsLoaded) return;
-    detectionInterval.current = setInterval(async () => {
-      if (!videoRef.current) return;
-      try {
-        const detection = await faceapi
-          .detectSingleFace(videoRef.current, new faceapi.TinyFaceDetectorOptions())
-          .withFaceExpressions();
-        if (detection) {
-          const expr = detection.expressions;
-          setEmotionScores(expr);
-          const top = Object.entries(expr).sort((a, b) => b[1] - a[1])[0];
-          setCurrentEmotion(top[0]);
-        }
-      } catch (e) {}
-    }, 1000);
-  }
-
-  function startSpeechRecognition() {
-    if (!("webkitSpeechRecognition" in window || "SpeechRecognition" in window)) return;
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SR();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = "en-US";
-    recognition.onresult = (e) => {
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        const t = e.results[i][0].transcript;
-        if (e.results[i].isFinal) {
-          const words = t.trim().split(/\s+/);
-          setWordCount(w => w + words.length);
-          const fillers = words.filter(w =>
-            FILLER_WORDS.includes(w.toLowerCase().replace(/[^a-z]/g, ""))
-          );
-          setFillerCount(f => f + fillers.length);
-          setTranscript(prev => prev + " " + t);
-        }
+ function startEmotionDetection() {
+  if (!modelsLoaded) {
+    const wait = setInterval(() => {
+      if (modelsLoaded) {
+        clearInterval(wait);
+        beginDetection();
       }
-    };
-    recognition.onerror = () => {};
-    recognition.start();
-    recognitionRef.current = recognition;
+    }, 500);
+    return;
   }
+  beginDetection();
+}
+
+function beginDetection() {
+  detectionInterval.current = setInterval(async () => {
+    if (!videoRef.current) return;
+    try {
+      const detection = await faceapi
+        .detectSingleFace(videoRef.current, new faceapi.TinyFaceDetectorOptions())
+        .withFaceExpressions();
+      if (detection) {
+        const expr = detection.expressions;
+        setEmotionScores(expr);
+        const top = Object.entries(expr).sort((a, b) => b[1] - a[1])[0];
+        setCurrentEmotion(top[0]);
+      }
+    } catch (e) {}
+  }, 1000);
+}
+
+ function startSpeechRecognition() {
+  if (!("webkitSpeechRecognition" in window || "SpeechRecognition" in window)) {
+    console.log("Speech Recognition not supported");
+    return;
+  }
+  console.log("Speech Recognition starting...");
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const recognition = new SR();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = "en-US";
+
+  recognition.onstart = () => console.log("Mic is listening");
+  recognition.onerror = (e) => console.log("Speech error:", e.error);
+  recognition.onresult = (e) => {
+    console.log("Heard something:", e.results);  
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) {
+        const words = t.trim().split(/\s+/);
+        setWordCount(w => w + words.length);
+        const fillers = words.filter(w =>
+          FILLER_WORDS.includes(w.toLowerCase().replace(/[^a-z]/g, ""))
+        );
+        setFillerCount(f => f + fillers.length);
+        setTranscript(prev => prev + " " + t);
+      }
+    }
+  };
+
+  recognition.start();
+  recognitionRef.current = recognition;
+}
 
   function stopSession() {
     setIsPresenting(false);
@@ -301,7 +326,7 @@ export default function ScriptPreview() {
   }
 
   const emotionColor = emotionColors[currentEmotion] || "#4FC3F7";
-  // ✅ FIXED — safe split
+  
   const wordCountScript = script ? script.split(" ").filter(Boolean).length : 0;
   const estimatedTime = script ? Math.ceil(wordCountScript / 130) : 0;
 
