@@ -1,2 +1,4 @@
 node_modules
 .env
+# Ignore face-api model files
+client/public/models/
