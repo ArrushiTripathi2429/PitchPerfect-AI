@@ -89,7 +89,7 @@ export default function LandingPage() {
         fontFamily: "'DM Sans', sans-serif",
         color: "#fff",
         overflowX: "hidden",
-        // ✅ REMOVED cursor: "none" — was blocking all clicks
+        
       }}
     >
       <style>{`
@@ -194,7 +194,7 @@ export default function LandingPage() {
         ::-webkit-scrollbar-thumb { background: rgba(255,107,53,0.3); border-radius: 2px; }
       `}</style>
 
-      {/* ✅ pointer-events: none on cursor divs so they never block clicks */}
+      
       <div className="cursor" style={{ left: mousePos.x, top: mousePos.y, pointerEvents: "none" }} />
       <div className="cursor-ring" style={{ left: mousePos.x, top: mousePos.y, pointerEvents: "none" }} />
       <div className="noise" />
@@ -476,7 +476,7 @@ export default function LandingPage() {
               style={{ fontSize: 17 }}
               onClick={() => navigate("/upload-topic")}
             >
-              Go to Dashboard →
+              Start Generating →
             </button>
           ) : (
             <SignInButton mode="modal" forceRedirectUrl="/upload-topic">

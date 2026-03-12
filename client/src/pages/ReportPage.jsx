@@ -1,19 +1,22 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useUser } from "@clerk/clerk-react";
 
 export default function ReportPage() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useUser(); // ✅ Clerk user
+
   const {
     topic, seconds, wordCount, wpm,
-    fillerCount, transcript, emotionScores, currentEmotion
+    fillerCount, transcript, emotionScores, currentEmotion,
+    postureScore, voiceCracks, eyeContact
   } = location.state || {};
 
   const [report, setReport] = useState("");
   const [loading, setLoading] = useState(true);
   const [dots, setDots] = useState(".");
 
-  
   function formatTime(s) {
     if (!s) return "0:00";
     const m = Math.floor(s / 60);
@@ -33,7 +36,6 @@ export default function ReportPage() {
     return () => clearInterval(interval);
   }, []);
 
-
   async function generateReport() {
     setLoading(true);
     try {
@@ -48,7 +50,10 @@ export default function ReportPage() {
           topic, seconds, wordCount, wpm,
           fillerCount, transcript,
           currentEmotion: dominantEmotion,
-          emotionScores
+          emotionScores, postureScore,
+          voiceCracks, eyeContact,
+          userId: user?.id,           // ✅ Clerk userId
+          userEmail: user?.primaryEmailAddress?.emailAddress, // ✅ optional
         })
       });
 
@@ -173,7 +178,7 @@ export default function ReportPage() {
             fontSize: "clamp(32px, 5vw, 56px)",
             letterSpacing: "-2px", fontWeight: 400, lineHeight: 1.1, marginBottom: 8,
           }}>
-            Your coaching{" "}
+            Your Presentation{" "}
             <span className="gradient-text" style={{ fontStyle: "italic" }}>report</span>
           </h1>
           <p style={{ fontSize: 15, color: "rgba(255,255,255,0.3)", fontWeight: 300 }}>
@@ -217,7 +222,7 @@ export default function ReportPage() {
         ) : sections.length > 0 ? (
           <>
             <div style={{ fontSize: 11, letterSpacing: 3, color: "rgba(255,107,53,0.7)", textTransform: "uppercase", marginBottom: 20, fontWeight: 500 }}>
-              AI Coaching Report
+              AI Presentation Report
             </div>
             {sections.map((section, i) => (
               <div key={i} className="report-card" style={{ animationDelay: `${i * 0.15}s` }}>
@@ -271,8 +276,7 @@ export default function ReportPage() {
           <button
             onClick={() => navigate("/")}
             style={{
-              padding: "18px 28px",
-              background: "none",
+              padding: "18px 28px", background: "none",
               border: "1px solid rgba(255,255,255,0.1)",
               color: "rgba(255,255,255,0.4)",
               borderRadius: 14, fontSize: 16,

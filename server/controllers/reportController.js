@@ -1,5 +1,4 @@
 const Report = require('../models/Report');
-const Session = require('../models/Session');
 const Groq = require('groq-sdk');
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
@@ -13,19 +12,22 @@ function formatTime(s) {
 
 /**
  * POST /api/report
- * Body: { topic, seconds, wordCount, wpm, fillerCount, transcript, 
- *         currentEmotion, postureScore, voiceCracks, eyeContact, sessionId }
  */
 const createReport = async (req, res, next) => {
   try {
     const {
       topic, seconds, wordCount, wpm, fillerCount,
       transcript, currentEmotion, postureScore,
-      voiceCracks, eyeContact, sessionId
+      voiceCracks, eyeContact, sessionId,
+      userId, userEmail   // ✅ from Clerk
     } = req.body;
 
     if (!topic) {
       return res.status(400).json({ message: 'Topic is required.' });
+    }
+
+    if (!userId) {
+      return res.status(401).json({ message: 'User not authenticated.' });
     }
 
     const completion = await groq.chat.completions.create({
@@ -58,22 +60,20 @@ Be specific, warm, and encouraging. Reference the actual numbers. No fluff.`
 
     const generatedReport = completion.choices[0].message.content;
 
-    // Save report to MongoDB
+
     const report = await Report.create({
+      userId,
+      userEmail: userEmail || null,
       sessionId: sessionId || null,
       topic,
       analysisData: {
-        seconds,
-        wordCount,
-        wpm,
-        fillerCount,
-        currentEmotion,
-        postureScore,
-        voiceCracks,
-        eyeContact,
+        seconds, wordCount, wpm, fillerCount,
+        currentEmotion, postureScore, voiceCracks, eyeContact,
       },
       content: generatedReport,
     });
+
+    console.log(`Report saved for user ${userId}:`, report._id);
 
     res.status(201).json({
       message: 'Report generated successfully.',
@@ -81,6 +81,21 @@ Be specific, warm, and encouraging. Reference the actual numbers. No fluff.`
       report: generatedReport,
     });
 
+  } catch (error) {
+    console.error("REPORT ERROR:", error.message);
+    next(error);
+  }
+};
+
+/**
+ * GET /api/report/user/:userId
+ * Returns all reports for a specific Clerk user
+ */
+const getReportsForUser = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+    const reports = await Report.find({ userId }).sort({ createdAt: -1 });
+    res.json(reports);
   } catch (error) {
     next(error);
   }
@@ -97,20 +112,6 @@ const getReportById = async (req, res, next) => {
       return res.status(404).json({ message: 'Report not found.' });
     }
     res.json(report);
-  } catch (error) {
-    next(error);
-  }
-};
-
-/**
- * GET /api/report/user/:userId
- */
-const getReportsForUser = async (req, res, next) => {
-  try {
-    const { userId } = req.params;
-    const reports = await Report.find({ userId })
-      .sort({ createdAt: -1 });
-    res.json(reports);
   } catch (error) {
     next(error);
   }
