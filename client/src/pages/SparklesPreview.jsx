@@ -21,7 +21,7 @@ export function SparklesPreview() {
         <div
           className="absolute top-0 w-1/4 h-px inset-x-60 bg-gradient-to-r from-transparent via-sky-500 to-transparent" />
 
-        {/* Core component */}
+  
         <SparklesCore
           background="transparent"
           minSize={0.4}
@@ -30,7 +30,7 @@ export function SparklesPreview() {
           className="w-full h-full"
           particleColor="#FFFFFF" />
 
-        {/* Radial Gradient to prevent sharp edges */}
+        
         <div
           className="absolute inset-0 w-full h-full bg-black [mask-image:radial-gradient(350px_200px_at_top,transparent_20%,white)]"></div>
       </div>
