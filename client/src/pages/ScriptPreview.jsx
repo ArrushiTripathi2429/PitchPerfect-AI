@@ -102,16 +102,18 @@ export default function ScriptPreview() {
     setLoadingScript(false);
   }
 
-  async function loadModels() {
-    try {
-      await Promise.all([
-        faceapi.nets.tinyFaceDetector.loadFromUri("/models"),
-        faceapi.nets.faceExpressionNet.loadFromUri("/models"),
-      ]);
-      setModelsLoaded(true);
-    } catch (e) {
-      setModelsLoaded(true);
-    }
+ async function loadModels() {
+  try {
+    const MODEL_URL = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights'
+    await Promise.all([
+      faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+      faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
+    ]);
+    setModelsLoaded(true);
+  } catch (e) {
+    setModelsLoaded(true);
+  }
+
   }
 
   async function loadMediaPipe() {

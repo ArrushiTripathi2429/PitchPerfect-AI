@@ -12,7 +12,15 @@ const app = express();
 
 connectDB();
 
-app.use(cors({ origin: "http://localhost:5173" }));
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "https://pitchperfectbackend.vercel.app",
+    "https://your-actual-frontend-url.vercel.app"
+  ],
+  credentials: true
+}));
+app.use(express.json());
 app.use(express.json());
 
 // Health check
