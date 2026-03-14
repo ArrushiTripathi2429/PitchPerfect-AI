@@ -104,13 +104,14 @@ export default function ScriptPreview() {
 
  async function loadModels() {
   try {
-    const MODEL_URL = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights'
+    const MODEL_URL = '/models'
     await Promise.all([
       faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
       faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
     ]);
     setModelsLoaded(true);
   } catch (e) {
+    console.error("Model load failed:", e);
     setModelsLoaded(true);
   }
 
