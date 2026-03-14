@@ -13,42 +13,41 @@ const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 const app = express();
 
 connectDB();
-app.options('*', cors());
+
 app.use(cors({
   origin: [
     "http://localhost:5173",
     "https://pitchperfectfrontend.vercel.app"
-
-    
   ],
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
-app.use(express.json());
 
-
-
-
-app.get('/', (req, res) => {
-  res.json({ message: 'PitchPerfect Backend is running! ' });
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
 });
 
-// Health check
+app.use(express.json());
+
+app.get('/', (req, res) => {
+  res.json({ message: 'PitchPerfect Backend is running!' });
+});
+
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-
-
-// API routes
 app.use('/api/script', scriptRoutes);
 app.use('/api/report', reportRoutes);
 
-// Error handling
 app.use(notFound);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
-
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
