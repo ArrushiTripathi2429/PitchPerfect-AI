@@ -104,7 +104,7 @@ export default function ScriptPreview() {
 
  async function loadModels() {
   try {
-    const MODEL_URL = '/models'
+    const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights'
     await Promise.all([
       faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
       faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
@@ -114,6 +114,7 @@ export default function ScriptPreview() {
     console.error("Model load failed:", e);
     setModelsLoaded(true);
   }
+}
 
   }
 
