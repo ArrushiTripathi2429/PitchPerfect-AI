@@ -1,6 +1,6 @@
 
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { RedirectToSignIn, SignedIn, SignedOut } from '@clerk/react'
+import { RedirectToSignIn, SignedIn, SignedOut } from '@clerk/clerk-react'
 import LandingPage from './pages/LandingPage'
 
 import ScriptPreview from './pages/ScriptPreview'

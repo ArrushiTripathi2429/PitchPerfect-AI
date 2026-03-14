@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useUser } from "@clerk/react";
+import { useUser } from "@clerk/clerk-react";
 
 export default function ReportPage() {
   const location = useLocation();
