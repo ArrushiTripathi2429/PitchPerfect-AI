@@ -13,7 +13,7 @@ const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 const app = express();
 
 connectDB();
-
+app.options('*', cors());
 app.use(cors({
   origin: [
     "http://localhost:5173",
