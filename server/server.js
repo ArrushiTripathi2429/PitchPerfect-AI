@@ -17,8 +17,9 @@ connectDB();
 app.use(cors({
   origin: [
     "http://localhost:5173",
+    "https://pitchperfectfrontend.vercel.app"
 
-    "https://pitchperfectai-six.vercel.app"
+    
   ],
   credentials: true
 }));
