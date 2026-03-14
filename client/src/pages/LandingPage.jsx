@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import TextRevealCard from "./TextRevealCardTitle";
 import HowItWorks from "../components/HowItWorks";
 import { SparklesPreview } from "../pages/SparklesPreview";
-import { SignInButton, SignOutButton, useUser, useClerk } from "@clerk/clerk-react";
+import { SignInButton, SignOutButton, useUser, useClerk } from "@clerk/react";
 import { useNavigate } from "react-router-dom";
 
 const floatingWords = [

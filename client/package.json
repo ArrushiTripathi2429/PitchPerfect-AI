@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@clerk/clerk-react": "^5.61.3",
+    "@clerk/react": "^6.1.0",
     "@mediapipe/tasks-vision": "^0.10.32",
     "@tsparticles/engine": "^3.9.1",
     "@tsparticles/react": "^3.0.0",
