@@ -157,6 +157,7 @@ async function loadMediaPipe() {
   }
 }
 
+
 async function setupCamera() {
   if (videoRef.current?.srcObject) {
     videoRef.current.srcObject.getTracks().forEach((t) => t.stop());
@@ -173,36 +174,33 @@ async function setupCamera() {
       videoRef.current.srcObject = stream;
 
       await new Promise((resolve) => {
-        videoRef.current.oncanplay = resolve;
-
-        setTimeout(resolve, 3000);
+        videoRef.current.onloadedmetadata = resolve;
+        setTimeout(resolve, 2000);
       });
 
+      videoRef.current.play();
       setCameraReady(true);
     }
 
     setupVoiceCrackDetection(stream);
+
   } catch (e) {
     console.error("Camera error:", e);
-
-    await new Promise((res) => setTimeout(res, 2000));
-
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await new Promise((resolve) => {
-          videoRef.current.oncanplay = resolve;
-          setTimeout(resolve, 3000);
-        });
-        setCameraReady(true);
-      }
-    } catch (e2) {
-      console.error("Camera retry failed:", e2);
-    }
+    setCameraReady(true);
   }
 }
 
+function setupVoiceCrackDetection(stream) {
+  try {
+    audioContextRef.current = new AudioContext();
+    const source = audioContextRef.current.createMediaStreamSource(stream);
+    analyserRef.current = audioContextRef.current.createAnalyser();
+    analyserRef.current.fftSize = 2048;
+    source.connect(analyserRef.current);
+  } catch (e) {
+    console.error("Audio setup error:", e);
+  }
+}
 function setupVoiceCrackDetection(stream) {
   try {
     audioContextRef.current = new AudioContext();
