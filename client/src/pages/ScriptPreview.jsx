@@ -143,45 +143,42 @@ export default function ScriptPreview() {
   }
 
   async function setupCamera() {
-    console.log("setupCamera called");
-
-    if (videoRef.current?.srcObject) {
-      videoRef.current.srcObject.getTracks().forEach((t) => t.stop());
-      videoRef.current.srcObject = null;
-    }
-
-    // Force ready after 3 seconds no matter what
-    const forceReady = setTimeout(() => {
-      console.log("Force ready triggered");
-      setCameraReady(true);
-    }, 3000);
-
-    try {
-      console.log("Requesting camera permission...");
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 640, height: 480, facingMode: "user" },
-        audio: true,
-      });
-      console.log("Camera permission granted!");
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.onloadedmetadata = () => {
-          console.log("Metadata loaded!");
-          clearTimeout(forceReady);
-          videoRef.current.play();
-          setCameraReady(true);
-        };
-      }
-
-      setupVoiceCrackDetection(stream);
-
-    } catch (e) {
-      console.error("Camera error:", e.name, e.message);
-      clearTimeout(forceReady);
-      setCameraReady(true);
-    }
+  if (videoRef.current?.srcObject) {
+    videoRef.current.srcObject.getTracks().forEach((t) => t.stop());
+    videoRef.current.srcObject = null;
   }
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { width: 640, height: 480, facingMode: "user" },
+      audio: true,
+    });
+
+    if (videoRef.current) {
+      videoRef.current.srcObject = stream;
+      
+    
+      videoRef.current.onloadedmetadata = () => {
+        videoRef.current.play();
+        setCameraReady(true);
+      };
+
+    
+      setTimeout(() => {
+        if (videoRef.current && videoRef.current.srcObject) {
+          videoRef.current.play().catch(() => {});
+          setCameraReady(true);
+        }
+      }, 2000);
+    }
+
+    setupVoiceCrackDetection(stream);
+
+  } catch (e) {
+    console.error("Camera error:", e.name, e.message);
+    setCameraReady(true);
+  }
+}
 
   function setupVoiceCrackDetection(stream) {
     try {
