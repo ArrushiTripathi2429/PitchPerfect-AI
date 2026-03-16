@@ -341,7 +341,7 @@ export default function ScriptPreview() {
   const wordCountScript = script ? script.split(" ").filter(Boolean).length : 0;
   const estimatedTime = script ? Math.ceil(wordCountScript / 130) : 0;
 
-  return (
+    return (
     <div style={{ background: "#020008", minHeight: "100vh", fontFamily: "'DM Sans', sans-serif", color: "#fff", overflowX: "hidden" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap');
@@ -370,6 +370,16 @@ export default function ScriptPreview() {
       `}</style>
 
       <div className="noise" />
+
+  
+      <video
+        ref={videoRef}
+        autoPlay
+        muted
+        playsInline
+        style={{ position: "absolute", opacity: 0, pointerEvents: "none", width: 1, height: 1 }}
+      />
+
       <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, overflow: "hidden" }}>
         <div style={{ position: "absolute", width: 600, height: 600, background: "radial-gradient(circle, rgba(255,107,53,0.09) 0%, transparent 70%)", top: "-150px", right: "-150px", animation: "orb 12s ease-in-out infinite" }} />
         <div style={{ position: "absolute", width: 500, height: 500, background: "radial-gradient(circle, rgba(192,38,211,0.07) 0%, transparent 70%)", bottom: "-100px", left: "-100px", animation: "orb 15s ease-in-out infinite reverse" }} />
@@ -410,7 +420,7 @@ export default function ScriptPreview() {
               </div>
             </div>
 
-            {/* RIGHT — Webcam + Stats */}
+            
             <div style={{ animation: "fadeUp 0.6s ease forwards" }}>
               <div style={{ marginBottom: 20 }}>
                 <div style={{ fontSize: 11, letterSpacing: 3, color: "rgba(255,107,53,0.7)", textTransform: "uppercase", marginBottom: 10, fontWeight: 500 }}>Live Practice</div>
@@ -418,7 +428,18 @@ export default function ScriptPreview() {
               </div>
 
               <div style={{ borderRadius: 18, overflow: "hidden", border: `2px solid ${isPresenting ? emotionColor + "50" : "rgba(255,255,255,0.06)"}`, background: "#080810", transition: "border-color 0.5s", aspectRatio: "4/3", position: "relative", marginBottom: 16 }}>
-                <video ref={videoRef} autoPlay muted playsInline style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+      
+                <video
+                  autoPlay
+                  muted
+                  playsInline
+                  ref={(el) => {
+                    if (el && videoRef.current?.srcObject && el.srcObject !== videoRef.current.srcObject) {
+                      el.srcObject = videoRef.current.srcObject;
+                    }
+                  }}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                />
 
                 {isPresenting && (
                   <div style={{ position: "absolute", top: 12, left: 12, background: "rgba(0,0,0,0.65)", backdropFilter: "blur(8px)", border: `1px solid ${emotionColor}40`, borderRadius: 100, padding: "5px 12px", display: "flex", alignItems: "center", gap: 6 }}>
@@ -486,4 +507,5 @@ export default function ScriptPreview() {
       </div>
     </div>
   );
+
 }
